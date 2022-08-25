@@ -1,0 +1,228 @@
+ // Calcul d'indices de salinité  sous Sentinel-2
+
+       //Dr.Bouacha Med islem // Université Ibn Khaldoun de TIARET//
+//1-Définir la région d'étude.
+var area = ee.FeatureCollection('users/islem2989/Algeria');
+var geom = ee.FeatureCollection('users/islem2989/assemblage')
+//2- identifier le produit sur lequel travailler ( sentinel-2 2A)
+var S2 = ee.ImageCollection("COPERNICUS/S2_SR")
+  .filterDate ('2019-01-01' ,'2020-05-30')
+  .filterBounds (area)
+  .filterMetadata ('CLOUDY_PIXEL_PERCENTAGE', 'Less_Than', 2);
+var vegetation = ee.Image(S2.mean());
+//3- Calcule des indices de salinité
+//3-1 indice de salinité ISSK ( abbas & khan 2007)
+var ISSK = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    '(RED/ NIR )*100',
+    {
+        'NIR': image.select('B8'),    // 620-670nm, NIR
+        'RED': image.select('B4'),    // 841-876nm, RED
+        
+    }))
+    .clip(area);
+});
+var Simbologie = {
+  min: 0,
+  max: 100,
+  palette: [
+      'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+               '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+               '004C00', '023B01', '012E01', '011D01', '011301'
+  ]
+};
+//3-2 indice de salinité normalisé NDSI ( Dehni & Lounis 2012)
+var NDSI = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    '((RED-NIR)/(RED+NIR))',
+      {
+        'RED': image.select('B4'), // red
+        'NIR': image.select('B8'), // NIR
+        
+        
+      }))
+    .clip(area);
+});
+var vis = {
+  min:-1,
+  max: 1,
+  palette: [
+      'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+               '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+               '004C00', '023B01', '012E01', '011D01', '011301'
+  ]
+};
+//3-3 indice de salinité SASI ( YAHIAOUI & al  2015)
+var SASI = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    '(RED/ pow((B),2) )*100',
+    {
+        'B': image.select('B8'),    // 620-670nm, BLUE
+        'RED': image.select('B2'),    // 841-876nm, RED
+        
+    }))
+    .clip(area);
+});
+var couleur = {
+  min: 0,
+  max: 1,
+  palette: [
+      'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+               '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+               '004C00', '023B01', '012E01', '011D01', '011301'
+  ]
+};
+
+//3-4 indice de salinité ISVK ( Khan & al  2005)
+var ISVK = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    '(GREEN + RED)/2',
+    {
+        'GREEN': image.select('B3'),    // 620-670nm, GREEN
+        'RED': image.select('B4'),    // 841-876nm, RED
+        
+    }))
+    .clip(area);
+});
+var COL = {
+  min: 0,
+  max: 1,
+  palette: [
+      'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+               '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+               '004C00', '023B01', '012E01', '011D01', '011301'
+  ]
+};
+
+//3-5 indice de salinité ISK ( Khan & al  2001)
+var ISK = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    'pow((GREEN * RED),0.5)',
+    {
+        'GREEN': image.select('B3'),    // 620-670nm, GREEN
+        'RED': image.select('B4'),    // 841-876nm, RED
+        
+    }))
+    .clip(area);
+});
+var COL = {
+  min: 0,
+  max: 1,
+  palette: [
+      'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+               '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+               '004C00', '023B01', '012E01', '011D01', '011301'
+  ]
+};
+//3-6 indice de salinité ISS ( Al khair  2003)
+var ISS = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    'pow((BLUE * RED),0.5)',
+    {
+        'BLUE': image.select('B2'),    // 620-670nm, BLUE
+        'RED': image.select('B4'),    // 841-876nm, RED
+        
+    }))
+    .clip(area);
+});
+
+
+
+//3-7 indice de salinité ISd ( Douaoui & al 2006)
+var ISd = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    'pow((GREEN),2) + pow((RED),2)',
+    {
+        'GREEN': image.select('B3'),    // 620-670nm, RED
+        'RED': image.select('B4'),    // 841-876nm, NIR
+        
+    }))
+    .clip(area);
+});
+var COL = {
+  min: 0,
+  max: 1,
+  palette: [
+      'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718',
+               '74A901', '66A000', '529400', '3E8601', '207401', '056201',
+               '004C00', '023B01', '012E01', '011D01', '011301'
+  ]
+};
+//3-8 indice de salinité ISvir ( Douaoui & Lépinard 2010)
+var ISvir = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    '2*GREEN-(RED+PIR)',
+    {
+        'GREEN': image.select('B3'),    // 620-670nm, GREEN
+        'RED': image.select('B4'),    // 841-876nm, RED
+        'PIR': image.select('B8'),    // 841-876nm, NIR
+    }))
+    .clip(area);
+});
+
+//3-9 indice de salinité ISr ( RAHMATI,2015)
+var ISr = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    'pow((GREEN*GREEN)+(RED*RED)+(PIR*PIR),0.5)',
+    {
+        'GREEN': image.select('B3'),    // 620-670nm, GREEN
+        'RED': image.select('B4'),    // 841-876nm, RED
+        'PIR': image.select('B8'),    // 841-876nm, NIR
+    }))
+    .clip(area);
+});
+//3-10 indice de salinité CRSI ( RAHMATI,2015)
+var CRSI = S2.map(function(image){
+  return  image.select().addBands(ee.Image(0).expression(
+    'pow(((RED * PIR) - (GREEN * BLUE) / (RED * PIR) + (GREEN * BLUE)),0.5)',
+    {
+        'GREEN': image.select('B3'),    // 620-670nm, GREEN
+        'RED': image.select('B4'),    // 841-876nm, RED
+        'PIR': image.select('B8'),    // 841-876nm, NIR
+        'BLUE': image.select('B2'),    // 841-876nm, BLUE
+    }))
+    .clip(area);
+});
+// Afficher le résultat sur la fenetre de visualisation
+Map.addLayer (ISSK, Simbologie, 'ISSk',1);
+Map.addLayer (NDSI, Simbologie, 'NDSI',1);
+Map.addLayer (SASI, Simbologie, 'SASI',1);
+Map.addLayer (ISVK, Simbologie, 'ISVK');
+Map.addLayer (ISK, Simbologie, 'ISK',1);
+Map.addLayer (ISS, Simbologie, 'ISS',1);
+Map.addLayer (ISd, Simbologie, 'ISd',1);
+Map.addLayer (ISvir, Simbologie, 'ISvir',1);
+Map.addLayer (ISr, Simbologie, 'ISr',1);
+Map.addLayer (CRSI, Simbologie, 'CRSI',1);
+
+Map.centerObject(area,12);
+Map.addLayer (geom, couleur, 'SAMPLES',1);
+var geom1 = ee.Geometry.Point(1.31766393, 35.17313872);
+// Imprimer sur la console une courbe de chaque indice par rapport au point geom01
+print(ui.Chart.image.series(ISSK, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(NDSI, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(SASI, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(ISVK, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(ISK, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(ISS, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(ISd, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(ISvir, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(ISr, geom1, ee.Reducer.mean(), 30));
+print(ui.Chart.image.series(CRSI, geom1, ee.Reducer.mean(), 30));
+// Exporter le résultat des indices pour tous les points vers drive au format CSV
+var poiArray = ISSK.getRegion(geom, 30);
+
+var names = poiArray.get(0)
+var values = poiArray.slice(1)
+
+var exportFC = ee.FeatureCollection(
+  values.map(function(values){
+    return ee.Feature(null, ee.Dictionary.fromLists(names, ee.List(values)))
+  })
+)
+
+var sortedFC = exportFC.sort('id')
+
+print(sortedFC)
+
+Export.table.toDrive(sortedFC)
