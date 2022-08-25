@@ -1,0 +1,41 @@
+// import ur are of intrest as table ( named table )
+var dataset = ee.ImageCollection('IDAHO_EPSCOR/TERRACLIMATE')
+                  .filter(ee.Filter.date('1990-01-01', '2022-08-01'))
+                  .select('pdsi')
+                  .map(function(dataset){return dataset.clip(table)});
+
+
+var maximumTemperatureVis = {
+  min: -600,
+  max: -200,
+  palette: [
+    '1a3678', '2955bc', '5699ff', '8dbae9', 'acd1ff', 'caebff', 'e5f9ff',
+    'fdffb4', 'ffe6a2', 'ffc969', 'ffa12d', 'ff7c1f', 'ca531a', 'ff0000',
+    'ab0000'
+  ],
+};
+Map.centerObject(table, 12);
+Map.addLayer(dataset, maximumTemperatureVis, 'PDSI');
+var chart = ui.Chart.image.series({imageCollection: dataset,
+                                                  region:table, 
+                                                  reducer: ee.Reducer.mean(),
+                                                  scale: 1000
+})
+ .setOptions({title: "PDSI ",
+   hAxis: {
+        title: 'date',
+       
+      },
+      vAxis: {
+        title: 'PDSI values'
+      },
+      lineWidth: 1,
+      pointSize: 3
+    });
+
+print(chart);
+Export.image.toDrive({
+  image: dataset.mean(),
+  description: 'PDSI',
+  //description: 'PDSI',
+  scale:100 }); //meters
